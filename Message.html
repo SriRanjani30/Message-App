@@ -3,71 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fake Messenger App</title>
+    <title>Messenger App</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
-        .container { display: flex; width: 100%; height: 100%; }
-        .sidebar { width: 250px; background: #f4f4f4; padding: 1em; border-right: 1px solid #ddd; }
-        .chat { flex: 1; display: flex; flex-direction: column; }
-        .chat-header { background: #333; color: #fff; padding: 1em; display: flex; justify-content: space-between; align-items: center; }
-        .chat-messages { flex: 1; padding: 1em; overflow-y: auto; border-bottom: 1px solid #ddd; }
-        .message { margin-bottom: 1em; }
-        .message.sender { text-align: right; }
-        .message p { margin: 0; padding: 0.5em; border-radius: 5px; display: inline-block; }
-        .message.sender p { background: #007bff; color: #fff; }
-        .message.receiver p { background: #e9ecef; color: #000; }
-        .message-input { padding: 1em; border-top: 1px solid #ddd; display: flex; }
-        .message-input input { flex: 1; padding: 0.5em; margin-right: 10px; }
-        .message-input button { padding: 0.5em; }
+        body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #007bff; color: #fff; padding: 1em; display: flex; justify-content: center; align-items: center; }
+        header nav { display: flex; gap: 1em; }
+        header nav a { color: #fff; text-decoration: none; font-weight: bold; }
+        header nav a:hover { text-decoration: underline; }
+        .container { flex: 1; display: flex; }
+        .content { display: none; flex: 1; padding: 1em; }
+        .active { display: block; }
+        .login-form, .profile-form { background: #fff; padding: 2em; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .login-form input, .profile-form input { margin-bottom: 1em; padding: 0.5em; width: 100%; border: 1px solid #ddd; border-radius: 5px; }
+        .login-form button, .profile-form button { padding: 0.5em; width: 100%; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .login-form button:hover, .profile-form button:hover { background: #0056b3; }
+        .chat-container { display: flex; width: 100%; height: calc(100vh - 80px); }
+        .sidebar { width: 250px; background: #f4f4f4; padding: 1em; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header h2 { margin: 0; }
+        .sidebar-header button { background: #007bff; color: #fff; border: none; padding: 0.5em; border-radius: 5px; cursor: pointer; }
+        .sidebar-header button:hover { background: #0056b3; }
         .user-list { list-style: none; padding: 0; margin: 0; }
-        .user-list li { padding: 0.5em; cursor: pointer; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        .user-list li:hover { background: #ddd; }
+        .user-list li { padding: 0.5em; cursor: pointer; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; }
+        .user-list img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
         .status { font-size: 0.8em; color: #666; }
         .online { color: green; }
         .offline { color: red; }
-        @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #ddd; }
-        }
+        .chat { flex: 1; display: flex; flex-direction: column; }
+        .chat-header { background: #007bff; color: #fff; padding: 1em; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header h2 { margin: 0; }
+        .chat-messages { flex: 1; padding: 1em; overflow-y: auto; border-bottom: 1px solid #ddd; background: #fff; }
+        .message { margin-bottom: 1em; display: flex; align-items: flex-end; }
+        .message.sender { justify-content: flex-end; }
+        .message p { margin: 0; padding: 0.5em; border-radius: 5px; display: inline-block; }
+        .message.sender p { background: #007bff; color: #fff; }
+        .message.receiver p { background: #e9ecef; color: #000; }
+        .message-time { font-size: 0.8em; color: #888; margin-left: 10px; }
+        .message-reactions { font-size: 1.2em; margin-left: 10px; }
+        .message-reactions span { cursor: pointer; margin: 0 5px; }
+        .message-input { padding: 1em; border-top: 1px solid #ddd; display: flex; align-items: center; background: #fff; }
+        .message-input input { flex: 1; padding: 0.5em; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .message-input button { padding: 0.5em; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .message-input button:hover { background: #0056b3; }
+        .emoji-picker { position: absolute; bottom: 80px; right: 20px; display: none; border: 1px solid #ddd; background: #fff; border-radius: 5px; padding: 5px; }
+        .emoji-picker span { cursor: pointer; padding: 5px; }
+        .emoji-picker span:hover { background: #ddd; }
+        .profile { margin-top: 1em; padding: 1em; background: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .profile img { width: 80px; height: 80px; border-radius: 50%; }
     </style>
 </head>
 <body>
+    <header>
+        <nav>
+            <a href="#home" onclick="showPage('home')">Home</a>
+            <a href="#login" onclick="showPage('login')">Login</a>
+            <a href="#messenger" onclick="showPage('messenger')">Messenger</a>
+            <a href="#profile" onclick="showPage('profile')">Profile</a>
+        </nav>
+    </header>
+
     <div class="container">
-        <div class="sidebar">
-            <h2>Contacts</h2>
-            <ul class="user-list">
-                <li data-user="John Doe">John Doe <span class="status online">Online</span></li>
-                <li data-user="Jane Smith">Jane Smith <span class="status offline">Offline</span></li>
-                <li data-user="Bob Johnson">Bob Johnson <span class="status online">Online</span></li>
-                <li data-user="Emily Davis">Emily Davis <span class="status offline">Offline</span></li>
-            </ul>
+        <div class="content active" id="home">
+            <h1>Welcome to the Messenger App</h1>
+            <p>This is a feature-rich messenger application simulating real-time communication.</p>
+            <p><a href="#login" onclick="showPage('login')">Login to start chatting</a></p>
         </div>
-        <div class="chat">
-            <div class="chat-header">
-                <h2 id="chat-title">Chat with John Doe</h2>
+        <div class="content" id="login">
+            <div class="login-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username">
+                <button id="login-button">Login</button>
             </div>
-            <div class="chat-messages" id="chat-messages">
-                <!-- Messages will be appended here -->
+        </div>
+        <div class="content" id="messenger">
+            <div class="chat-container">
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <h2>Chats</h2>
+                        <button id="logout-button">Logout</button>
+                    </div>
+                    <ul class="user-list" id="user-list">
+                        <!-- Example users -->
+                        <li data-user="John Doe" data-pic="https://via.placeholder.com/40">
+                            <img src="https://via.placeholder.com/40" alt="John Doe"> John Doe <span class="status online">Online</span>
+                        </li>
+                        <li data-user="Jane Smith" data-pic="https://via.placeholder.com/40">
+                            <img src="https://via.placeholder.com/40" alt="Jane Smith"> Jane Smith <span class="status offline">Offline</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="chat">
+                    <div class="chat-header">
+                        <h2 id="chat-title">Select a user to chat</h2>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                    </div>
+                    <div class="message-input">
+                        <input type="text" id="message-input" placeholder="Type a message...">
+                        <button id="emoji-button">😊</button>
+                        <button id="send-button">Send</button>
+                        <div class="emoji-picker" id="emoji-picker">
+                            <span>😀</span><span>😁</span><span>😂</span><span>😍</span><span>😎</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="message-input">
-                <input type="text" id="message-input" placeholder="Type a message...">
-                <button id="send-button">Send</button>
+        </div>
+        <div class="content" id="profile">
+            <div class="profile">
+                <img src="https://via.placeholder.com/80" alt="Profile Picture">
+                <input type="text" id="profile-username" value="John Doe">
+                <button id="save-profile-button">Save Profile</button>
             </div>
         </div>
     </div>
 
     <script>
-        const userList = document.querySelectorAll('.user-list li');
+        function showPage(pageId) {
+            document.querySelectorAll('.content').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        document.getElementById('login-button').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value.trim();
+            if (username) {
+                document.querySelector('#profile-username').value = username;
+                showPage('messenger');
+            } else {
+                alert('Please enter a username');
+            }
+        });
+
+        document.getElementById('logout-button').addEventListener('click', () => {
+            showPage('login');
+        });
+
+        document.getElementById('save-profile-button').addEventListener('click', () => {
+            alert('Profile updated!');
+        });
+
         const chatTitle = document.getElementById('chat-title');
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const userList = document.getElementById('user-list');
 
-        userList.forEach(user => {
-            user.addEventListener('click', () => {
-                chatTitle.textContent = `Chat with ${user.dataset.user}`;
-                chatMessages.innerHTML = '';
-            });
+        userList.addEventListener('click', (e) => {
+            const userItem = e.target.closest('li');
+            if (userItem) {
+                const userName = userItem.dataset.user;
+                chatTitle.textContent = `Chat with ${userName}`;
+                chatMessages.innerHTML = ''; 
+            }
         });
 
         sendButton.addEventListener('click', () => {
@@ -80,12 +169,30 @@
             }
         });
 
+        emojiButton.addEventListener('click', () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        emojiPicker.addEventListener('click', (e) => {
+            if (e.target.tagName === 'SPAN') {
+                messageInput.value += e.target.textContent;
+                emojiPicker.style.display = 'none';
+                messageInput.focus();
+            }
+        });
+
         function sendMessage() {
             const messageText = messageInput.value.trim();
             if (messageText) {
                 const message = document.createElement('div');
                 message.classList.add('message', 'sender');
-                message.innerHTML = `<p>${messageText}</p>`;
+                const timestamp = new Date().toLocaleTimeString();
+                message.innerHTML = `
+                    <p>${messageText}<span class="message-time">${timestamp}</span></p>
+                    <div class="message-reactions">
+                        <span>👍</span><span>❤️</span><span>😂</span>
+                    </div>
+                `;
                 chatMessages.appendChild(message);
                 messageInput.value = '';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
