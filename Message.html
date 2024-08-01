@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Messenger App</title>
+    <title>Messenger App</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
-        .container { display: flex; width: 100%; height: 100%; }
-        .login-container, .app-container { display: none; width: 100%; height: 100%; }
-        .login-container { display: flex; justify-content: center; align-items: center; background: #f4f4f4; }
-        .login-form { background: #fff; padding: 2em; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .login-form input { margin-bottom: 1em; padding: 0.5em; width: 100%; }
-        .login-form button { padding: 0.5em; width: 100%; background: #007bff; color: #fff; border: none; border-radius: 5px; }
-        .app-container { display: flex; }
+        body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; transition: background-color 0.3s; }
+        header { background: #007bff; color: #fff; padding: 1em; display: flex; justify-content: center; align-items: center; }
+        header nav { display: flex; gap: 1em; }
+        header nav a { color: #fff; text-decoration: none; font-weight: bold; }
+        header nav a:hover { text-decoration: underline; }
+        .container { flex: 1; display: flex; }
+        .content { display: none; flex: 1; padding: 1em; }
+        .active { display: block; }
+        .login-form, .profile-form, .settings-form { background: #fff; padding: 2em; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .login-form input, .profile-form input, .settings-form input { margin-bottom: 1em; padding: 0.5em; width: 100%; border: 1px solid #ddd; border-radius: 5px; }
+        .login-form button, .profile-form button, .settings-form button { padding: 0.5em; width: 100%; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .login-form button:hover, .profile-form button:hover, .settings-form button:hover { background: #0056b3; }
+        .chat-container { display: flex; width: 100%; height: calc(100vh - 80px); }
         .sidebar { width: 250px; background: #f4f4f4; padding: 1em; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; }
         .sidebar-header h2 { margin: 0; }
-        .sidebar-header button { background: #007bff; color: #fff; border: none; padding: 0.5em; border-radius: 5px; }
-        .chat-list { list-style: none; padding: 0; margin: 0; }
-        .chat-list li { padding: 0.5em; cursor: pointer; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; }
-        .chat-list li:hover { background: #ddd; }
+        .sidebar-header button { background: #007bff; color: #fff; border: none; padding: 0.5em; border-radius: 5px; cursor: pointer; }
+        .sidebar-header button:hover { background: #0056b3; }
         .user-list { list-style: none; padding: 0; margin: 0; }
         .user-list li { padding: 0.5em; cursor: pointer; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; }
         .user-list img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
@@ -27,163 +30,176 @@
         .online { color: green; }
         .offline { color: red; }
         .chat { flex: 1; display: flex; flex-direction: column; }
-        .chat-header { background: #333; color: #fff; padding: 1em; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header { background: #007bff; color: #fff; padding: 1em; display: flex; justify-content: space-between; align-items: center; }
         .chat-header h2 { margin: 0; }
-        .chat-messages { flex: 1; padding: 1em; overflow-y: auto; border-bottom: 1px solid #ddd; }
+        .chat-header .search-container { display: flex; align-items: center; }
+        .chat-header input { padding: 0.5em; border: 1px solid #ddd; border-radius: 5px; }
+        .chat-messages { flex: 1; padding: 1em; overflow-y: auto; border-bottom: 1px solid #ddd; background: #fff; }
         .message { margin-bottom: 1em; display: flex; align-items: flex-end; }
         .message.sender { justify-content: flex-end; }
         .message p { margin: 0; padding: 0.5em; border-radius: 5px; display: inline-block; }
         .message.sender p { background: #007bff; color: #fff; }
         .message.receiver p { background: #e9ecef; color: #000; }
         .message-time { font-size: 0.8em; color: #888; margin-left: 10px; }
+        .message-status { font-size: 0.8em; color: #888; margin-left: 10px; }
         .message-reactions { font-size: 1.2em; margin-left: 10px; }
         .message-reactions span { cursor: pointer; margin: 0 5px; }
-        .message-input { padding: 1em; border-top: 1px solid #ddd; display: flex; align-items: center; }
-        .message-input input { flex: 1; padding: 0.5em; margin-right: 10px; }
-        .message-input button { padding: 0.5em; }
-        .emoji-picker { position: absolute; bottom: 70px; right: 20px; display: none; border: 1px solid #ddd; background: #fff; border-radius: 5px; padding: 5px; }
+        .message-input { padding: 1em; border-top: 1px solid #ddd; display: flex; align-items: center; background: #fff; }
+        .message-input input { flex: 1; padding: 0.5em; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .message-input button { padding: 0.5em; background: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .message-input button:hover { background: #0056b3; }
+        .emoji-picker { position: absolute; bottom: 80px; right: 20px; display: none; border: 1px solid #ddd; background: #fff; border-radius: 5px; padding: 5px; }
         .emoji-picker span { cursor: pointer; padding: 5px; }
         .emoji-picker span:hover { background: #ddd; }
         .profile { margin-top: 1em; padding: 1em; background: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .profile img { width: 80px; height: 80px; border-radius: 50%; }
-        .profile input { margin-top: 10px; padding: 0.5em; width: 100%; }
-        .search-bar { margin-bottom: 1em; padding: 0.5em; width: 100%; border: 1px solid #ddd; border-radius: 5px; }
-        .notifications { padding: 1em; background: #fff; border-top: 1px solid #ddd; }
-        .notification { background: #007bff; color: #fff; padding: 0.5em; margin-bottom: 1em; border-radius: 5px; }
-        @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #ddd; }
-        }
+        .settings { margin-top: 1em; padding: 1em; background: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .settings input[type="checkbox"] { margin-right: 10px; }
+        .dark-mode { background-color: #333; color: #fff; }
+        .dark-mode .sidebar { background: #555; }
+        .dark-mode .chat-messages { background: #444; }
     </style>
 </head>
 <body>
-    <div class="login-container" id="login-container">
-        <div class="login-form">
-            <h2>Login</h2>
-            <input type="text" id="username" placeholder="Username">
-            <button id="login-button">Login</button>
-        </div>
-    </div>
+    <header>
+        <nav>
+            <a href="#home" onclick="showPage('home')">Home</a>
+            <a href="#login" onclick="showPage('login')">Login</a>
+            <a href="#messenger" onclick="showPage('messenger')">Messenger</a>
+            <a href="#profile" onclick="showPage('profile')">Profile</a>
+            <a href="#settings" onclick="showPage('settings')">Settings</a>
+        </nav>
+    </header>
 
-    <div class="app-container" id="app-container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>Messenger</h2>
-                <button id="logout-button">Logout</button>
-            </div>
-            <input type="text" id="search-bar" class="search-bar" placeholder="Search contacts...">
-            <ul class="chat-list" id="chat-list">
-                <!-- Chat list items will be appended here -->
-            </ul>
-            <ul class="user-list" id="user-list">
-                <li data-user="John Doe" data-pic="https://via.placeholder.com/40">
-                    <img src="https://via.placeholder.com/40" alt="John Doe"> John Doe <span class="status online">Online</span>
-                </li>
-                <li data-user="Jane Smith" data-pic="https://via.placeholder.com/40">
-                    <img src="https://via.placeholder.com/40" alt="Jane Smith"> Jane Smith <span class="status offline">Offline</span>
-                </li>
-                <li data-user="Bob Johnson" data-pic="https://via.placeholder.com/40">
-                    <img src="https://via.placeholder.com/40" alt="Bob Johnson"> Bob Johnson <span class="status online">Online</span>
-                </li>
-                <li data-user="Emily Davis" data-pic="https://via.placeholder.com/40">
-                    <img src="https://via.placeholder.com/40" alt="Emily Davis"> Emily Davis <span class="status offline">Offline</span>
-                </li>
-            </ul>
+    <div class="container">
+        <!-- Home Page -->
+        <div class="content active" id="home">
+            <h1>Welcome to the Messenger App</h1>
+            <p>This is a feature-rich messenger application simulating real-time communication.</p>
+            <p><a href="#login" onclick="showPage('login')">Login to start chatting</a></p>
         </div>
 
-        <div class="chat">
-            <div class="chat-header">
-                <h2 id="chat-title">Select a user to chat</h2>
+        <!-- Login Page -->
+        <div class="content" id="login">
+            <div class="login-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username">
+                <button id="login-button">Login</button>
             </div>
-            <div class="notifications" id="notifications"></div>
-            <div class="chat-messages" id="chat-messages">
-                <!-- Messages will be appended here -->
-            </div>
-            <div class="message-input">
-                <input type="text" id="message-input" placeholder="Type a message...">
-                <button id="emoji-button">😊</button>
-                <button id="send-button">Send</button>
-                <div class="emoji-picker" id="emoji-picker">
-                    <span>😀</span><span>😁</span><span>😂</span><span>😍</span><span>😎</span>
+        </div>
+
+        <!-- Messenger Page -->
+        <div class="content" id="messenger">
+            <div class="chat-container">
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <h2>Chats</h2>
+                        <button id="logout-button">Logout</button>
+                    </div>
+                    <ul class="user-list" id="user-list">
+                        <!-- Example users -->
+                        <li data-user="John Doe" data-pic="https://via.placeholder.com/40">
+                            <img src="https://via.placeholder.com/40" alt="John Doe"> John Doe <span class="status online">Online</span>
+                        </li>
+                        <li data-user="Jane Smith" data-pic="https://via.placeholder.com/40">
+                            <img src="https://via.placeholder.com/40" alt="Jane Smith"> Jane Smith <span class="status offline">Offline</span>
+                        </li>
+                        <!-- Add more users here -->
+                    </ul>
+                </div>
+                <div class="chat">
+                    <div class="chat-header">
+                        <div class="search-container">
+                            <input type="text" id="search-messages" placeholder="Search messages...">
+                        </div>
+                        <h2 id="chat-title">Select a user to chat</h2>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Messages will appear here -->
+                    </div>
+                    <div class="message-input">
+                        <input type="text" id="message-input" placeholder="Type a message...">
+                        <button id="emoji-button">😊</button>
+                        <button id="send-button">Send</button>
+                        <div class="emoji-picker" id="emoji-picker">
+                            <span>😀</span><span>😁</span><span>😂</span><span>😍</span><span>😎</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="profile" id="profile">
-            <img src="https://via.placeholder.com/80" alt="Profile Picture">
-            <input type="text" id="profile-username" value="John Doe">
+        <!-- Profile Page -->
+        <div class="content" id="profile">
+            <div class="profile">
+                <img src="https://via.placeholder.com/80" alt="Profile Picture">
+                <input type="text" id="profile-username" value="John Doe">
+                <input type="file" id="profile-pic" style="margin-top: 10px;">
+                <button id="save-profile-button">Save Profile</button>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div class="content" id="settings">
+            <div class="settings">
+                <h2>Settings</h2>
+                <label>
+                    <input type="checkbox" id="dark-mode-toggle">
+                    Dark Mode
+                </label>
+            </div>
         </div>
     </div>
 
     <script>
-        const loginContainer = document.getElementById('login-container');
-        const appContainer = document.getElementById('app-container');
-        const userList = document.getElementById('user-list');
+        function showPage(pageId) {
+            document.querySelectorAll('.content').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        document.getElementById('login-button').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value.trim();
+            if (username) {
+                document.querySelector('#profile-username').value = username;
+                showPage('messenger');
+            } else {
+                alert('Please enter a username');
+            }
+        });
+
+        document.getElementById('logout-button').addEventListener('click', () => {
+            showPage('login');
+        });
+
+        document.getElementById('save-profile-button').addEventListener('click', () => {
+            alert('Profile updated!');
+        });
+
+        document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        });
+
         const chatTitle = document.getElementById('chat-title');
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const emojiButton = document.getElementById('emoji-button');
         const emojiPicker = document.getElementById('emoji-picker');
-        const profileUsername = document.getElementById('profile-username');
-        const searchBar = document.getElementById('search-bar');
-        const chatList = document.getElementById('chat-list');
-        const notifications = document.getElementById('notifications');
-        const logoutButton = document.getElementById('logout-button');
-        const typingIndicator = document.getElementById('typing-indicator');
-        let typingTimeout;
+        const userList = document.getElementById('user-list');
+        const searchMessages = document.getElementById('search-messages');
 
-        // Simulate user authentication
-        document.getElementById('login-button').addEventListener('click', () => {
-            loginContainer.style.display = 'none';
-            appContainer.style.display = 'flex';
-        });
-
-        // Logout functionality
-        logoutButton.addEventListener('click', () => {
-            appContainer.style.display = 'none';
-            loginContainer.style.display = 'flex';
-        });
-
-        // Update profile username
-        profileUsername.addEventListener('blur', () => {
-            profileUsername.value = profileUsername.value.trim() || 'Anonymous';
-        });
-
-        // Search functionality
-        searchBar.addEventListener('input', () => {
-            const query = searchBar.value.toLowerCase();
-            userList.querySelectorAll('li').forEach(user => {
-                const name = user.textContent.toLowerCase();
-                user.style.display = name.includes(query) ? '' : 'none';
-            });
-        });
-
-        // Chat list functionality
         userList.addEventListener('click', (e) => {
-            if (e.target.tagName === 'LI' || e.target.parentElement.tagName === 'LI') {
-                const user = e.target.closest('li') || e.target.parentElement;
-                chatTitle.textContent = `Chat with ${user.dataset.user}`;
-                chatMessages.innerHTML = ''; // Clear chat history on user switch
-                typingIndicator.textContent = ''; // Clear typing indicator
-                addToChatList(user.dataset.user);
+            const userItem = e.target.closest('li');
+            if (userItem) {
+                const userName = userItem.dataset.user;
+                chatTitle.textContent = `Chat with ${userName}`;
+                chatMessages.innerHTML = ''; 
             }
         });
-
-        function addToChatList(user) {
-            const existingChat = Array.from(chatList.children).find(chat => chat.dataset.user === user);
-            if (!existingChat) {
-                const chatItem = document.createElement('li');
-                chatItem.dataset.user = user;
-                chatItem.textContent = `Chat with ${user}`;
-                chatItem.addEventListener('click', () => {
-                    chatTitle.textContent = `Chat with ${user}`;
-                    chatMessages.innerHTML = ''; 
-                    typingIndicator.textContent = ''; 
-                });
-                chatList.appendChild(chatItem);
-            }
-        }
 
         sendButton.addEventListener('click', () => {
             sendMessage();
@@ -192,12 +208,6 @@
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 sendMessage();
-            } else {
-                typingIndicator.textContent = 'Typing...';
-                clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(() => {
-                    typingIndicator.textContent = '';
-                }, 1000);
             }
         });
 
@@ -219,28 +229,26 @@
                 const message = document.createElement('div');
                 message.classList.add('message', 'sender');
                 const timestamp = new Date().toLocaleTimeString();
+                const status = '<span class="message-status">Sent</span>';
                 message.innerHTML = `
-                    <p>${messageText}<span class="message-time">${timestamp}</span></p>
+                    <p>${messageText}${status}<span class="message-time">${timestamp}</span></p>
                     <div class="message-reactions">
                         <span>👍</span><span>❤️</span><span>😂</span>
                     </div>
                 `;
                 chatMessages.appendChild(message);
                 messageInput.value = '';
-                chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to latest message
-                displayNotification(`New message from ${chatTitle.textContent.replace('Chat with ', '')}`);
+                chatMessages.scrollTop = chatMessages.scrollHeight; 
             }
         }
 
-        function displayNotification(message) {
-            const notification = document.createElement('div');
-            notification.classList.add('notification');
-            notification.textContent = message;
-            notifications.appendChild(notification);
-            setTimeout(() => {
-                notifications.removeChild(notification);
-            }, 3000);
-        }
+        searchMessages.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.message').forEach(message => {
+                const text = message.textContent.toLowerCase();
+                message.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        });
     </script>
 </body>
 </html>
